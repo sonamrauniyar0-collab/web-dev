@@ -1,0 +1,971 @@
+import React, { useState, useMemo } from "react";
+import {
+  LayoutDashboard, UtensilsCrossed, ShoppingCart, Database,
+  Plus, Pencil, Trash2, X, Search, Coffee, TrendingUp,
+  PackageX, Clock, Minus, ReceiptText, AlertTriangle, Check
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+} from "recharts";
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+const C = {
+  coffee: "#3D2317",
+  coffeeSoft: "#5A3826",
+  terracotta: "#B85042",
+  terracottaSoft: "#D97F73",
+  sage: "#8FA88E",
+  sand: "#EFE7DA",
+  paper: "#FBF8F4",
+  ink: "#2B1B14",
+  inkMuted: "#8A7566",
+  line: "#E4DACB",
+  danger: "#A83A32",
+  white: "#FFFFFF",
+};
+const FONT_DISPLAY = "'Fraunces', Georgia, serif";
+const FONT_BODY = "'Inter', system-ui, sans-serif";
+const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
+
+/* ============================================================
+   SEED DATA — mirrors WK6_SQL.sql exactly
+   ============================================================ */
+const seed = {
+  categories: [
+    { CategoryID: 1, CategoryName: "Tea" },
+    { CategoryID: 2, CategoryName: "Coffee" },
+    { CategoryID: 3, CategoryName: "Snacks" },
+    { CategoryID: 4, CategoryName: "Cold Drinks" },
+    { CategoryID: 5, CategoryName: "Desserts" },
+  ],
+  menuItems: [
+    { ItemID: 1, ItemName: "Masala Chiya", Price: 40, CategoryID: 1 },
+    { ItemID: 2, ItemName: "Milk Tea", Price: 35, CategoryID: 1 },
+    { ItemID: 3, ItemName: "Black Tea", Price: 30, CategoryID: 1 },
+    { ItemID: 4, ItemName: "Americano", Price: 90, CategoryID: 2 },
+    { ItemID: 5, ItemName: "Cappuccino", Price: 120, CategoryID: 2 },
+    { ItemID: 6, ItemName: "Latte", Price: 130, CategoryID: 2 },
+    { ItemID: 7, ItemName: "Veg Momo (10pc)", Price: 150, CategoryID: 3 },
+    { ItemID: 8, ItemName: "Chicken Momo (10pc)", Price: 180, CategoryID: 3 },
+    { ItemID: 9, ItemName: "Chicken Roll", Price: 160, CategoryID: 3 },
+    { ItemID: 10, ItemName: "Aloo Pakoda", Price: 100, CategoryID: 3 },
+    { ItemID: 11, ItemName: "Iced Lemon Tea", Price: 80, CategoryID: 4 },
+    { ItemID: 12, ItemName: "Cold Coffee", Price: 110, CategoryID: 4 },
+    { ItemID: 13, ItemName: "Lassi", Price: 90, CategoryID: 4 },
+    { ItemID: 14, ItemName: "Chocolate Cake Slice", Price: 120, CategoryID: 5 },
+    { ItemID: 15, ItemName: "Sel Roti (2pc)", Price: 60, CategoryID: 5 },
+  ],
+  customers: [
+    { CustomerID: 1, Name: "Sita Rai", Phone: "9841000001" },
+    { CustomerID: 2, Name: "Ram Thapa", Phone: "9841000002" },
+    { CustomerID: 3, Name: "Anjali Gurung", Phone: "9841000003" },
+    { CustomerID: 4, Name: "Bikash Shrestha", Phone: "9841000004" },
+    { CustomerID: 5, Name: "Pooja KC", Phone: "9841000005" },
+    { CustomerID: 6, Name: "Sunil Adhikari", Phone: "9841000006" },
+    { CustomerID: 7, Name: "Nisha Tamang", Phone: "9841000007" },
+    { CustomerID: 8, Name: "Suman Basnet", Phone: "9841000008" },
+    { CustomerID: 9, Name: "Kabita Lama", Phone: "9841000009" },
+    { CustomerID: 10, Name: "Prakash Karki", Phone: "9841000010" },
+    { CustomerID: 11, Name: "Rekha Magar", Phone: "9841000011" },
+    { CustomerID: 12, Name: "Dipesh Rana", Phone: "9841000012" },
+    { CustomerID: 13, Name: "Sabina Poudel", Phone: "9841000013" },
+    { CustomerID: 14, Name: "Milan Sharma", Phone: "9841000014" },
+    { CustomerID: 15, Name: "Asha Bhattarai", Phone: "9841000015" },
+  ],
+  employees: [
+    { EmployeeID: 1, Name: "Hari Bahadur", Role: "Senior Barista" },
+    { EmployeeID: 2, Name: "Sarita Koirala", Role: "Cashier" },
+    { EmployeeID: 3, Name: "Manoj Rai", Role: "Kitchen Staff" },
+    { EmployeeID: 4, Name: "Gita Shrestha", Role: "Barista" },
+    { EmployeeID: 5, Name: "Bishnu Thapa", Role: "Kitchen Staff" },
+    { EmployeeID: 6, Name: "Laxmi Gurung", Role: "Manager" },
+  ],
+  shifts: [
+    { ShiftID: 1, StartTime: "2026-07-20T07:00", EndTime: "2026-07-20T15:00" },
+    { ShiftID: 2, StartTime: "2026-07-20T15:00", EndTime: "2026-07-20T22:00" },
+    { ShiftID: 3, StartTime: "2026-07-21T07:00", EndTime: "2026-07-21T15:00" },
+    { ShiftID: 4, StartTime: "2026-07-21T15:00", EndTime: "2026-07-21T22:00" },
+    { ShiftID: 5, StartTime: "2026-07-22T07:00", EndTime: "2026-07-22T15:00" },
+    { ShiftID: 6, StartTime: "2026-07-22T15:00", EndTime: "2026-07-22T22:00" },
+    { ShiftID: 7, StartTime: "2026-07-23T07:00", EndTime: "2026-07-23T15:00" },
+    { ShiftID: 8, StartTime: "2026-07-23T15:00", EndTime: "2026-07-23T22:00" },
+    { ShiftID: 9, StartTime: "2026-07-24T07:00", EndTime: "2026-07-24T15:00" },
+    { ShiftID: 10, StartTime: "2026-07-24T15:00", EndTime: "2026-07-24T22:00" },
+  ],
+  suppliers: [
+    { SupplierID: 1, SupplierName: "Himalayan Tea Traders", ContactInfo: "himalayantea@example.com" },
+    { SupplierID: 2, SupplierName: "Kathmandu Dairy Co.", ContactInfo: "kdairy@example.com" },
+    { SupplierID: 3, SupplierName: "Valley Fresh Produce", ContactInfo: "valleyfresh@example.com" },
+    { SupplierID: 4, SupplierName: "Everest Bakery Supplies", ContactInfo: "everestbakery@example.com" },
+    { SupplierID: 5, SupplierName: "Bagmati Beverage Distributors", ContactInfo: "bagmatibev@example.com" },
+  ],
+  ingredients: [
+    { IngredientID: 1, IngredientName: "Tea Leaves", StockLevel: 25.5 },
+    { IngredientID: 2, IngredientName: "Milk", StockLevel: 40 },
+    { IngredientID: 3, IngredientName: "Sugar", StockLevel: 30 },
+    { IngredientID: 4, IngredientName: "Coffee Beans", StockLevel: 15 },
+    { IngredientID: 5, IngredientName: "Flour", StockLevel: 20 },
+    { IngredientID: 6, IngredientName: "Chicken", StockLevel: 12 },
+    { IngredientID: 7, IngredientName: "Vegetables (Mixed)", StockLevel: 18.5 },
+    { IngredientID: 8, IngredientName: "Butter", StockLevel: 8 },
+    { IngredientID: 9, IngredientName: "Cocoa Powder", StockLevel: 6.5 },
+    { IngredientID: 10, IngredientName: "Disposable Cups", StockLevel: 200 },
+  ],
+  supplierIngredients: [
+    { SupplierIngredientID: 1, SupplierID: 1, IngredientID: 1, UnitCost: 450 },
+    { SupplierIngredientID: 2, SupplierID: 2, IngredientID: 2, UnitCost: 90 },
+    { SupplierIngredientID: 3, SupplierID: 2, IngredientID: 3, UnitCost: 60 },
+    { SupplierIngredientID: 4, SupplierID: 1, IngredientID: 4, UnitCost: 900 },
+    { SupplierIngredientID: 5, SupplierID: 4, IngredientID: 5, UnitCost: 70 },
+    { SupplierIngredientID: 6, SupplierID: 3, IngredientID: 6, UnitCost: 350 },
+    { SupplierIngredientID: 7, SupplierID: 3, IngredientID: 7, UnitCost: 120 },
+    { SupplierIngredientID: 8, SupplierID: 2, IngredientID: 8, UnitCost: 500 },
+    { SupplierIngredientID: 9, SupplierID: 4, IngredientID: 9, UnitCost: 800 },
+    { SupplierIngredientID: 10, SupplierID: 4, IngredientID: 10, UnitCost: 5 },
+    { SupplierIngredientID: 11, SupplierID: 5, IngredientID: 10, UnitCost: 4.5 },
+    { SupplierIngredientID: 12, SupplierID: 1, IngredientID: 3, UnitCost: 58 },
+    { SupplierIngredientID: 13, SupplierID: 3, IngredientID: 5, UnitCost: 68 },
+    { SupplierIngredientID: 14, SupplierID: 2, IngredientID: 6, UnitCost: 340 },
+    { SupplierIngredientID: 15, SupplierID: 5, IngredientID: 8, UnitCost: 510 },
+  ],
+  employeeShifts: [
+    { EmployeeShiftID: 1, EmployeeID: 1, ShiftID: 1 },
+    { EmployeeShiftID: 2, EmployeeID: 2, ShiftID: 1 },
+    { EmployeeShiftID: 3, EmployeeID: 3, ShiftID: 2 },
+    { EmployeeShiftID: 4, EmployeeID: 4, ShiftID: 2 },
+    { EmployeeShiftID: 5, EmployeeID: 1, ShiftID: 3 },
+    { EmployeeShiftID: 6, EmployeeID: 5, ShiftID: 3 },
+    { EmployeeShiftID: 7, EmployeeID: 2, ShiftID: 4 },
+    { EmployeeShiftID: 8, EmployeeID: 6, ShiftID: 4 },
+    { EmployeeShiftID: 9, EmployeeID: 4, ShiftID: 5 },
+    { EmployeeShiftID: 10, EmployeeID: 3, ShiftID: 6 },
+    { EmployeeShiftID: 11, EmployeeID: 1, ShiftID: 7 },
+    { EmployeeShiftID: 12, EmployeeID: 5, ShiftID: 8 },
+  ],
+  orders: [
+    { OrderID: 1, CustomerID: 1, EmployeeID: 1, OrderDate: "2026-07-20T08:15", TotalAmount: 70 },
+    { OrderID: 2, CustomerID: null, EmployeeID: 2, OrderDate: "2026-07-20T09:02", TotalAmount: 130 },
+    { OrderID: 3, CustomerID: 2, EmployeeID: 1, OrderDate: "2026-07-20T10:30", TotalAmount: 185 },
+    { OrderID: 4, CustomerID: 3, EmployeeID: 2, OrderDate: "2026-07-20T11:45", TotalAmount: 90 },
+    { OrderID: 5, CustomerID: null, EmployeeID: 3, OrderDate: "2026-07-20T13:10", TotalAmount: 150 },
+    { OrderID: 6, CustomerID: 4, EmployeeID: 4, OrderDate: "2026-07-20T16:20", TotalAmount: 260 },
+    { OrderID: 7, CustomerID: 5, EmployeeID: 2, OrderDate: "2026-07-20T17:05", TotalAmount: 130 },
+    { OrderID: 8, CustomerID: null, EmployeeID: 4, OrderDate: "2026-07-20T18:40", TotalAmount: 160 },
+    { OrderID: 9, CustomerID: 6, EmployeeID: 1, OrderDate: "2026-07-21T08:20", TotalAmount: 140 },
+    { OrderID: 10, CustomerID: 7, EmployeeID: 2, OrderDate: "2026-07-21T09:15", TotalAmount: 290 },
+    { OrderID: 11, CustomerID: null, EmployeeID: 3, OrderDate: "2026-07-21T12:00", TotalAmount: 180 },
+    { OrderID: 12, CustomerID: 8, EmployeeID: 4, OrderDate: "2026-07-21T13:30", TotalAmount: 130 },
+    { OrderID: 13, CustomerID: 9, EmployeeID: 1, OrderDate: "2026-07-21T15:45", TotalAmount: 90 },
+    { OrderID: 14, CustomerID: null, EmployeeID: 5, OrderDate: "2026-07-21T17:10", TotalAmount: 150 },
+    { OrderID: 15, CustomerID: 10, EmployeeID: 2, OrderDate: "2026-07-21T19:00", TotalAmount: 130 },
+    { OrderID: 16, CustomerID: 11, EmployeeID: 6, OrderDate: "2026-07-22T08:10", TotalAmount: 110 },
+    { OrderID: 17, CustomerID: null, EmployeeID: 1, OrderDate: "2026-07-22T09:40", TotalAmount: 70 },
+    { OrderID: 18, CustomerID: 12, EmployeeID: 4, OrderDate: "2026-07-22T11:20", TotalAmount: 160 },
+    { OrderID: 19, CustomerID: 13, EmployeeID: 5, OrderDate: "2026-07-22T12:50", TotalAmount: 180 },
+    { OrderID: 20, CustomerID: null, EmployeeID: 3, OrderDate: "2026-07-22T14:15", TotalAmount: 170 },
+    { OrderID: 21, CustomerID: 14, EmployeeID: 1, OrderDate: "2026-07-22T16:30", TotalAmount: 75 },
+    { OrderID: 22, CustomerID: 15, EmployeeID: 2, OrderDate: "2026-07-22T18:00", TotalAmount: 300 },
+    { OrderID: 23, CustomerID: null, EmployeeID: 4, OrderDate: "2026-07-23T08:25", TotalAmount: 110 },
+    { OrderID: 24, CustomerID: 1, EmployeeID: 6, OrderDate: "2026-07-23T10:10", TotalAmount: 130 },
+    { OrderID: 25, CustomerID: 2, EmployeeID: 1, OrderDate: "2026-07-23T12:40", TotalAmount: 185 },
+  ],
+  orderItems: [
+    { OrderItemID: 1, OrderID: 1, ItemID: 1, Quantity: 1, LineTotal: 40 },
+    { OrderItemID: 2, OrderID: 1, ItemID: 3, Quantity: 1, LineTotal: 30 },
+    { OrderItemID: 3, OrderID: 2, ItemID: 6, Quantity: 1, LineTotal: 130 },
+    { OrderItemID: 4, OrderID: 3, ItemID: 7, Quantity: 1, LineTotal: 150 },
+    { OrderItemID: 5, OrderID: 3, ItemID: 2, Quantity: 1, LineTotal: 35 },
+    { OrderItemID: 6, OrderID: 4, ItemID: 4, Quantity: 1, LineTotal: 90 },
+    { OrderItemID: 7, OrderID: 5, ItemID: 7, Quantity: 1, LineTotal: 150 },
+    { OrderItemID: 8, OrderID: 6, ItemID: 8, Quantity: 1, LineTotal: 180 },
+    { OrderItemID: 9, OrderID: 6, ItemID: 11, Quantity: 1, LineTotal: 80 },
+    { OrderItemID: 10, OrderID: 7, ItemID: 6, Quantity: 1, LineTotal: 130 },
+    { OrderItemID: 11, OrderID: 8, ItemID: 9, Quantity: 1, LineTotal: 160 },
+    { OrderItemID: 12, OrderID: 9, ItemID: 1, Quantity: 1, LineTotal: 40 },
+    { OrderItemID: 13, OrderID: 9, ItemID: 10, Quantity: 1, LineTotal: 100 },
+    { OrderItemID: 14, OrderID: 10, ItemID: 8, Quantity: 1, LineTotal: 180 },
+    { OrderItemID: 15, OrderID: 10, ItemID: 12, Quantity: 1, LineTotal: 110 },
+    { OrderItemID: 16, OrderID: 11, ItemID: 8, Quantity: 1, LineTotal: 180 },
+    { OrderItemID: 17, OrderID: 12, ItemID: 10, Quantity: 1, LineTotal: 100 },
+    { OrderItemID: 18, OrderID: 12, ItemID: 3, Quantity: 1, LineTotal: 30 },
+    { OrderItemID: 19, OrderID: 13, ItemID: 4, Quantity: 1, LineTotal: 90 },
+    { OrderItemID: 20, OrderID: 14, ItemID: 7, Quantity: 1, LineTotal: 150 },
+    { OrderItemID: 21, OrderID: 15, ItemID: 6, Quantity: 1, LineTotal: 130 },
+    { OrderItemID: 22, OrderID: 16, ItemID: 11, Quantity: 1, LineTotal: 80 },
+    { OrderItemID: 23, OrderID: 16, ItemID: 3, Quantity: 1, LineTotal: 30 },
+    { OrderItemID: 24, OrderID: 17, ItemID: 1, Quantity: 1, LineTotal: 40 },
+    { OrderItemID: 25, OrderID: 17, ItemID: 3, Quantity: 1, LineTotal: 30 },
+    { OrderItemID: 26, OrderID: 18, ItemID: 9, Quantity: 1, LineTotal: 160 },
+    { OrderItemID: 27, OrderID: 19, ItemID: 4, Quantity: 1, LineTotal: 90 },
+    { OrderItemID: 28, OrderID: 19, ItemID: 13, Quantity: 1, LineTotal: 90 },
+    { OrderItemID: 29, OrderID: 20, ItemID: 12, Quantity: 1, LineTotal: 110 },
+    { OrderItemID: 30, OrderID: 20, ItemID: 15, Quantity: 1, LineTotal: 60 },
+    { OrderItemID: 31, OrderID: 21, ItemID: 2, Quantity: 1, LineTotal: 35 },
+    { OrderItemID: 32, OrderID: 21, ItemID: 1, Quantity: 1, LineTotal: 40 },
+    { OrderItemID: 33, OrderID: 22, ItemID: 8, Quantity: 1, LineTotal: 180 },
+    { OrderItemID: 34, OrderID: 22, ItemID: 14, Quantity: 1, LineTotal: 120 },
+    { OrderItemID: 35, OrderID: 23, ItemID: 3, Quantity: 1, LineTotal: 30 },
+    { OrderItemID: 36, OrderID: 23, ItemID: 11, Quantity: 1, LineTotal: 80 },
+    { OrderItemID: 37, OrderID: 24, ItemID: 6, Quantity: 1, LineTotal: 130 },
+    { OrderItemID: 38, OrderID: 25, ItemID: 7, Quantity: 1, LineTotal: 150 },
+    { OrderItemID: 39, OrderID: 25, ItemID: 2, Quantity: 1, LineTotal: 35 },
+    { OrderItemID: 40, OrderID: 9, ItemID: 10, Quantity: 0, LineTotal: 0 }, // placeholder removed below
+  ].filter(oi => oi.OrderItemID !== 40),
+};
+
+/* ============================================================
+   TABLE CONFIG — drives the generic admin CRUD panel
+   ============================================================ */
+const TABLES = [
+  { key: "categories", label: "Category", pk: "CategoryID", fields: [
+    { key: "CategoryName", label: "Category Name", type: "text" },
+  ]},
+  { key: "menuItems", label: "MenuItem", pk: "ItemID", fields: [
+    { key: "ItemName", label: "Item Name", type: "text" },
+    { key: "Price", label: "Price", type: "number" },
+    { key: "CategoryID", label: "Category", type: "fk", ref: "categories", refLabel: "CategoryName" },
+  ]},
+  { key: "customers", label: "Customer", pk: "CustomerID", fields: [
+    { key: "Name", label: "Name", type: "text" },
+    { key: "Phone", label: "Phone", type: "text" },
+  ]},
+  { key: "employees", label: "Employee", pk: "EmployeeID", fields: [
+    { key: "Name", label: "Name", type: "text" },
+    { key: "Role", label: "Role", type: "text" },
+  ]},
+  { key: "shifts", label: "Shift", pk: "ShiftID", fields: [
+    { key: "StartTime", label: "Start Time", type: "datetime" },
+    { key: "EndTime", label: "End Time", type: "datetime" },
+  ]},
+  { key: "suppliers", label: "Supplier", pk: "SupplierID", fields: [
+    { key: "SupplierName", label: "Supplier Name", type: "text" },
+    { key: "ContactInfo", label: "Contact Info", type: "text" },
+  ]},
+  { key: "ingredients", label: "Ingredient", pk: "IngredientID", fields: [
+    { key: "IngredientName", label: "Ingredient Name", type: "text" },
+    { key: "StockLevel", label: "Stock Level", type: "number" },
+  ]},
+  { key: "orders", label: "OrderTable", pk: "OrderID", fields: [
+    { key: "CustomerID", label: "Customer", type: "fk", ref: "customers", refLabel: "Name", nullable: true },
+    { key: "EmployeeID", label: "Employee", type: "fk", ref: "employees", refLabel: "Name" },
+    { key: "OrderDate", label: "Order Date", type: "datetime" },
+    { key: "TotalAmount", label: "Total Amount", type: "number", readOnly: true },
+  ]},
+  { key: "orderItems", label: "OrderItem", pk: "OrderItemID", fields: [
+    { key: "OrderID", label: "Order", type: "fk", ref: "orders", refLabel: "OrderID" },
+    { key: "ItemID", label: "Menu Item", type: "fk", ref: "menuItems", refLabel: "ItemName" },
+    { key: "Quantity", label: "Quantity", type: "number" },
+    { key: "LineTotal", label: "Line Total", type: "number" },
+  ]},
+  { key: "employeeShifts", label: "EmployeeShift", pk: "EmployeeShiftID", fields: [
+    { key: "EmployeeID", label: "Employee", type: "fk", ref: "employees", refLabel: "Name" },
+    { key: "ShiftID", label: "Shift", type: "fk", ref: "shifts", refLabel: "ShiftID" },
+  ]},
+  { key: "supplierIngredients", label: "SupplierIngredient", pk: "SupplierIngredientID", fields: [
+    { key: "SupplierID", label: "Supplier", type: "fk", ref: "suppliers", refLabel: "SupplierName" },
+    { key: "IngredientID", label: "Ingredient", type: "fk", ref: "ingredients", refLabel: "IngredientName" },
+    { key: "UnitCost", label: "Unit Cost", type: "number" },
+  ]},
+];
+
+// Referential integrity rules mirroring the real ON DELETE behavior
+const DELETE_RULES = {
+  categories: [{ child: "menuItems", fk: "CategoryID", mode: "RESTRICT" }],
+  menuItems: [{ child: "orderItems", fk: "ItemID", mode: "RESTRICT" }],
+  customers: [{ child: "orders", fk: "CustomerID", mode: "SET NULL" }],
+  employees: [
+    { child: "orders", fk: "EmployeeID", mode: "RESTRICT" },
+    { child: "employeeShifts", fk: "EmployeeID", mode: "CASCADE" },
+  ],
+  shifts: [{ child: "employeeShifts", fk: "ShiftID", mode: "CASCADE" }],
+  suppliers: [{ child: "supplierIngredients", fk: "SupplierID", mode: "CASCADE" }],
+  ingredients: [{ child: "supplierIngredients", fk: "IngredientID", mode: "CASCADE" }],
+  orders: [{ child: "orderItems", fk: "OrderID", mode: "CASCADE" }],
+};
+
+const fmtNPR = (n) => `NPR ${Number(n || 0).toFixed(2)}`;
+const nextId = (arr, pk) => (arr.length ? Math.max(...arr.map(r => r[pk])) + 1 : 1);
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+export default function ChiyaBhawanApp() {
+  const [db, setDb] = useState(seed);
+  const [view, setView] = useState("dashboard");
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, tone = "success") => {
+    setToast({ msg, tone });
+    setTimeout(() => setToast(null), 2600);
+  };
+
+  return (
+    <div style={{ fontFamily: FONT_BODY, background: C.paper, minHeight: "100vh", color: C.ink }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: ${C.line}; border-radius: 4px; }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid ${C.terracotta}; outline-offset: 1px; }
+      `}</style>
+
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <Sidebar view={view} setView={setView} />
+        <main style={{ flex: 1, minWidth: 0, padding: "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
+          {view === "dashboard" && <Dashboard db={db} />}
+          {view === "menu" && <MenuBrowse db={db} />}
+          {view === "order" && <OrderEntry db={db} setDb={setDb} showToast={showToast} />}
+          {view === "admin" && <AdminPanel db={db} setDb={setDb} showToast={showToast} />}
+        </main>
+      </div>
+
+      {toast && <Toast msg={toast.msg} tone={toast.tone} />}
+    </div>
+  );
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+function Sidebar({ view, setView }) {
+  const items = [
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { key: "menu", label: "Menu", icon: UtensilsCrossed },
+    { key: "order", label: "Order Entry", icon: ShoppingCart },
+    { key: "admin", label: "Admin", icon: Database },
+  ];
+  return (
+    <aside style={{ width: 220, flexShrink: 0, background: C.coffee, color: C.sand, padding: "26px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 10px 26px" }}>
+        <div style={{ width: 34, height: 34, borderRadius: "50%", background: C.terracotta, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Coffee size={17} color={C.white} />
+        </div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 17, lineHeight: 1.1, color: C.white }}>
+          Chiya<br />Bhawan
+        </div>
+      </div>
+      {items.map(it => {
+        const Icon = it.icon;
+        const active = view === it.key;
+        return (
+          <button
+            key={it.key}
+            onClick={() => setView(it.key)}
+            style={{
+              display: "flex", alignItems: "center", gap: 11, padding: "10px 12px",
+              borderRadius: 8, border: "none", cursor: "pointer", textAlign: "left",
+              background: active ? "rgba(184,80,66,0.22)" : "transparent",
+              color: active ? C.white : "#C9B8A9",
+              fontFamily: FONT_BODY, fontSize: 14, fontWeight: active ? 600 : 500,
+              borderLeft: active ? `3px solid ${C.terracotta}` : "3px solid transparent",
+              transition: "background 0.15s",
+            }}
+          >
+            <Icon size={17} />
+            {it.label}
+          </button>
+        );
+      })}
+      <div style={{ marginTop: "auto", padding: "14px 12px 0", fontSize: 11, color: "#8A7566", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        Demo build — mirrors live MySQL schema &amp; constraints. Data resets on reload.
+      </div>
+    </aside>
+  );
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function Dashboard({ db }) {
+  const bestSellers = useMemo(() => {
+    const byItem = {};
+    db.orderItems.forEach(oi => { byItem[oi.ItemID] = (byItem[oi.ItemID] || 0) + oi.Quantity; });
+    return Object.entries(byItem)
+      .map(([itemId, qty]) => ({
+        name: db.menuItems.find(m => m.ItemID === Number(itemId))?.ItemName || "?",
+        Units: qty,
+      }))
+      .sort((a, b) => b.Units - a.Units)
+      .slice(0, 5);
+  }, [db]);
+
+  const lowStock = useMemo(() =>
+    db.ingredients
+      .filter(i => i.StockLevel < 20)
+      .sort((a, b) => a.StockLevel - b.StockLevel)
+      .map(i => ({
+        ...i,
+        suppliers: db.supplierIngredients
+          .filter(si => si.IngredientID === i.IngredientID)
+          .map(si => db.suppliers.find(s => s.SupplierID === si.SupplierID)?.SupplierName)
+          .filter(Boolean),
+      })), [db]);
+
+  const staffHours = useMemo(() => {
+    const byEmp = {};
+    db.employeeShifts.forEach(es => {
+      const shift = db.shifts.find(s => s.ShiftID === es.ShiftID);
+      if (!shift) return;
+      const hrs = (new Date(shift.EndTime) - new Date(shift.StartTime)) / 3600000;
+      byEmp[es.EmployeeID] = (byEmp[es.EmployeeID] || { hrs: 0, shifts: 0 });
+      byEmp[es.EmployeeID].hrs += hrs;
+      byEmp[es.EmployeeID].shifts += 1;
+    });
+    return Object.entries(byEmp)
+      .map(([empId, v]) => ({ name: db.employees.find(e => e.EmployeeID === Number(empId))?.Name || "?", ...v }))
+      .sort((a, b) => b.hrs - a.hrs);
+  }, [db]);
+
+  const totalRevenue = db.orders.reduce((s, o) => s + o.TotalAmount, 0);
+  const recordCount = Object.values(db).reduce((s, arr) => s + arr.length, 0);
+
+  return (
+    <div>
+      <PageHeader eyebrow="Owner view" title="Dashboard" sub="A snapshot of what used to be guesswork." />
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+        <StatCard label="Total Records" value={recordCount} icon={Database} />
+        <StatCard label="Orders" value={db.orders.length} icon={ShoppingCart} />
+        <StatCard label="Revenue Tracked" value={fmtNPR(totalRevenue)} icon={TrendingUp} small />
+        <StatCard label="Low-Stock Alerts" value={lowStock.length} icon={PackageX} tone={lowStock.length ? "danger" : "default"} />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18, marginBottom: 18 }}>
+        <Card title="Best-Selling Items" icon={TrendingUp}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={bestSellers} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke={C.line} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: C.inkMuted }} interval={0} angle={-14} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11, fill: C.inkMuted }} allowDecimals={false} />
+              <Tooltip contentStyle={{ fontFamily: FONT_BODY, fontSize: 12, borderRadius: 8, border: `1px solid ${C.line}` }} />
+              <Bar dataKey="Units" radius={[5, 5, 0, 0]}>
+                {bestSellers.map((_, i) => <Cell key={i} fill={i === 0 ? C.terracotta : "#D8B8AE"} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card title="Low-Stock Alert" icon={AlertTriangle}>
+          {lowStock.length === 0 ? (
+            <EmptyNote text="Everything's stocked above threshold." />
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {lowStock.map(i => (
+                <div key={i.IngredientID} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingBottom: 9, borderBottom: `1px solid ${C.line}` }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13.5 }}>{i.IngredientName}</div>
+                    <div style={{ fontSize: 11.5, color: C.inkMuted }}>{i.suppliers.join(", ") || "No supplier linked"}</div>
+                  </div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 13, color: C.danger, fontWeight: 700 }}>{i.StockLevel} units</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="Staff Hours" icon={Clock}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {staffHours.map(s => (
+            <div key={s.name} style={{ background: C.sand, borderRadius: 10, padding: "12px 14px" }}>
+              <div style={{ fontWeight: 600, fontSize: 13.5 }}>{s.name}</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 18, fontWeight: 700, color: C.coffee, marginTop: 2 }}>{s.hrs.toFixed(1)}h</div>
+              <div style={{ fontSize: 11, color: C.inkMuted }}>{s.shifts} shift{s.shifts !== 1 ? "s" : ""}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ============================================================
+   MENU BROWSING (customer-facing)
+   ============================================================ */
+function MenuBrowse({ db }) {
+  const [activeCat, setActiveCat] = useState(null);
+  const popularIds = useMemo(() => {
+    const byItem = {};
+    db.orderItems.forEach(oi => { byItem[oi.ItemID] = (byItem[oi.ItemID] || 0) + oi.Quantity; });
+    return Object.entries(byItem).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => Number(id));
+  }, [db]);
+
+  const cats = activeCat ? db.categories.filter(c => c.CategoryID === activeCat) : db.categories;
+
+  return (
+    <div>
+      <PageHeader eyebrow="Customer view" title="Menu" sub="What's on offer at Chiya Bhawan today." />
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+        <Pill active={activeCat === null} onClick={() => setActiveCat(null)}>All</Pill>
+        {db.categories.map(c => (
+          <Pill key={c.CategoryID} active={activeCat === c.CategoryID} onClick={() => setActiveCat(c.CategoryID)}>{c.CategoryName}</Pill>
+        ))}
+      </div>
+
+      {cats.map(cat => {
+        const items = db.menuItems.filter(m => m.CategoryID === cat.CategoryID);
+        if (!items.length) return null;
+        return (
+          <div key={cat.CategoryID} style={{ marginBottom: 26 }}>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, fontWeight: 600, marginBottom: 12, color: C.coffee }}>{cat.CategoryName}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              {items.map(item => (
+                <div key={item.ItemID} style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 12, padding: "14px 16px", position: "relative" }}>
+                  {popularIds.includes(item.ItemID) && (
+                    <span style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontWeight: 700, color: C.terracotta, background: "#FBEAE6", padding: "2px 7px", borderRadius: 20 }}>POPULAR</span>
+                  )}
+                  <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 6 }}>{item.ItemName}</div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 15, color: C.terracotta, fontWeight: 700 }}>{fmtNPR(item.Price)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================
+   ORDER ENTRY (POS)
+   ============================================================ */
+function OrderEntry({ db, setDb, showToast }) {
+  const [employeeId, setEmployeeId] = useState(db.employees[0]?.EmployeeID || "");
+  const [customerId, setCustomerId] = useState("");
+  const [ticket, setTicket] = useState([]); // [{ItemID, ItemName, Price, Quantity}]
+
+  const addItem = (item) => {
+    setTicket(prev => {
+      const existing = prev.find(t => t.ItemID === item.ItemID);
+      if (existing) return prev.map(t => t.ItemID === item.ItemID ? { ...t, Quantity: t.Quantity + 1 } : t);
+      return [...prev, { ItemID: item.ItemID, ItemName: item.ItemName, Price: item.Price, Quantity: 1 }];
+    });
+  };
+  const changeQty = (itemId, delta) => {
+    setTicket(prev => prev
+      .map(t => t.ItemID === itemId ? { ...t, Quantity: t.Quantity + delta } : t)
+      .filter(t => t.Quantity > 0));
+  };
+  const removeItem = (itemId) => setTicket(prev => prev.filter(t => t.ItemID !== itemId));
+
+  const total = ticket.reduce((s, t) => s + t.Price * t.Quantity, 0);
+
+  const placeOrder = () => {
+    if (!employeeId || ticket.length === 0) {
+      showToast("Select an employee and add at least one item.", "danger");
+      return;
+    }
+    const newOrderId = nextId(db.orders, "OrderID");
+    const newOrder = {
+      OrderID: newOrderId,
+      CustomerID: customerId ? Number(customerId) : null,
+      EmployeeID: Number(employeeId),
+      OrderDate: new Date().toISOString().slice(0, 16),
+      TotalAmount: total, // mirrors the auto-recalc trigger — computed, never hand-entered
+    };
+    let nextOiId = nextId(db.orderItems, "OrderItemID");
+    const newItems = ticket.map(t => ({
+      OrderItemID: nextOiId++,
+      OrderID: newOrderId,
+      ItemID: t.ItemID,
+      Quantity: t.Quantity,
+      LineTotal: t.Price * t.Quantity,
+    }));
+    setDb(prev => ({ ...prev, orders: [...prev.orders, newOrder], orderItems: [...prev.orderItems, ...newItems] }));
+    setTicket([]);
+    setCustomerId("");
+    showToast(`Order #${newOrderId} placed — ${fmtNPR(total)}`);
+  };
+
+  return (
+    <div>
+      <PageHeader eyebrow="Staff view" title="Order Entry" sub="Build a ticket the way the counter would." />
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+        <div>
+          {db.categories.map(cat => (
+            <div key={cat.CategoryID} style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: C.inkMuted, textTransform: "uppercase", marginBottom: 8 }}>{cat.CategoryName}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {db.menuItems.filter(m => m.CategoryID === cat.CategoryID).map(item => (
+                  <button key={item.ItemID} onClick={() => addItem(item)} style={{
+                    textAlign: "left", background: C.white, border: `1px solid ${C.line}`, borderRadius: 10,
+                    padding: "10px 12px", cursor: "pointer", fontFamily: FONT_BODY,
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{item.ItemName}</div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 12.5, color: C.terracotta, marginTop: 3 }}>{fmtNPR(item.Price)}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Receipt-style ticket — signature element */}
+        <div style={{ position: "sticky", top: 20, alignSelf: "start" }}>
+          <div style={{
+            background: C.white, border: `1px solid ${C.line}`, borderRadius: "4px 4px 0 0",
+            padding: "18px 18px 8px", fontFamily: FONT_MONO,
+          }}>
+            <div style={{ textAlign: "center", marginBottom: 12 }}>
+              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 16 }}>CHIYA BHAWAN</div>
+              <div style={{ fontSize: 10.5, color: C.inkMuted }}>ORDER TICKET</div>
+            </div>
+
+            <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+              <select value={employeeId} onChange={e => setEmployeeId(e.target.value)} style={inputStyle}>
+                <option value="">Select employee…</option>
+                {db.employees.map(e => <option key={e.EmployeeID} value={e.EmployeeID}>{e.Name}</option>)}
+              </select>
+              <select value={customerId} onChange={e => setCustomerId(e.target.value)} style={inputStyle}>
+                <option value="">Walk-in (no customer)</option>
+                {db.customers.map(c => <option key={c.CustomerID} value={c.CustomerID}>{c.Name}</option>)}
+              </select>
+            </div>
+
+            <div style={{ borderTop: `1px dashed ${C.inkMuted}`, paddingTop: 10, minHeight: 120 }}>
+              {ticket.length === 0 ? (
+                <div style={{ fontSize: 12, color: C.inkMuted, textAlign: "center", padding: "20px 0" }}>Ticket is empty</div>
+              ) : ticket.map(t => (
+                <div key={t.ItemID} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div>{t.ItemName}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                      <IconBtn icon={Minus} onClick={() => changeQty(t.ItemID, -1)} />
+                      <span style={{ width: 16, textAlign: "center" }}>{t.Quantity}</span>
+                      <IconBtn icon={Plus} onClick={() => changeQty(t.ItemID, 1)} />
+                      <button onClick={() => removeItem(t.ItemID)} style={{ marginLeft: 4, border: "none", background: "none", color: C.danger, cursor: "pointer", fontSize: 11 }}>remove</button>
+                    </div>
+                  </div>
+                  <div>{fmtNPR(t.Price * t.Quantity)}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ borderTop: `1px dashed ${C.inkMuted}`, marginTop: 6, paddingTop: 10, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}>
+              <span>TOTAL</span>
+              <span>{fmtNPR(total)}</span>
+            </div>
+          </div>
+          <div style={{ height: 10, background: `repeating-linear-gradient(45deg, ${C.white} 0 6px, transparent 6px 12px)`, borderLeft: `1px solid ${C.line}`, borderRight: `1px solid ${C.line}` }} />
+          <button onClick={placeOrder} style={{
+            width: "100%", marginTop: 12, background: C.terracotta, color: C.white, border: "none",
+            borderRadius: 10, padding: "12px 0", fontWeight: 700, fontSize: 14, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}>
+            <ReceiptText size={16} /> Place Order
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ADMIN — generic CRUD across all 11 tables
+   ============================================================ */
+function AdminPanel({ db, setDb, showToast }) {
+  const [activeTable, setActiveTable] = useState(TABLES[0].key);
+  const [modal, setModal] = useState(null); // { mode: 'add'|'edit', row }
+  const [search, setSearch] = useState("");
+
+  const config = TABLES.find(t => t.key === activeTable);
+  const rows = db[activeTable];
+
+  const filteredRows = useMemo(() => {
+    if (!search) return rows;
+    const q = search.toLowerCase();
+    return rows.filter(r => Object.values(r).some(v => String(v ?? "").toLowerCase().includes(q)));
+  }, [rows, search]);
+
+  const refLabel = (field, val) => {
+    if (val === null || val === undefined || val === "") return "—";
+    const refRow = db[field.ref].find(r => r[TABLES.find(t => t.key === field.ref).pk] === Number(val));
+    return refRow ? (field.refLabel === TABLES.find(t => t.key === field.ref).pk ? `#${val}` : refRow[field.refLabel]) : `#${val}`;
+  };
+
+  const recalcOrderTotal = (state, orderId) => {
+    if (orderId === null || orderId === undefined) return state;
+    const total = state.orderItems
+      .filter(oi => oi.OrderID === orderId)
+      .reduce((s, oi) => s + Number(oi.LineTotal || 0), 0);
+    return { ...state, orders: state.orders.map(o => o.OrderID === orderId ? { ...o, TotalAmount: total } : o) };
+  };
+
+  const handleSave = (formData) => {
+    const isEdit = modal.mode === "edit";
+    setDb(prev => {
+      const arr = prev[activeTable];
+      let next;
+      if (isEdit) {
+        next = { ...prev, [activeTable]: arr.map(r => r[config.pk] === modal.row[config.pk] ? { ...r, ...formData } : r) };
+      } else {
+        const newRow = { ...formData, [config.pk]: nextId(arr, config.pk) };
+        next = { ...prev, [activeTable]: [...arr, newRow] };
+      }
+      // Mirror the real AFTER INSERT/UPDATE trigger on OrderItem — recalc affected order(s)
+      if (activeTable === "orderItems") {
+        next = recalcOrderTotal(next, formData.OrderID);
+        if (isEdit && modal.row.OrderID !== formData.OrderID) next = recalcOrderTotal(next, modal.row.OrderID);
+      }
+      return next;
+    });
+    showToast(isEdit ? "Record updated." : "Record added.");
+    setModal(null);
+  };
+
+  const handleDelete = (row) => {
+    const rules = DELETE_RULES[activeTable] || [];
+    for (const rule of rules) {
+      const referenced = db[rule.child].some(r => r[rule.fk] === row[config.pk]);
+      if (referenced && rule.mode === "RESTRICT") {
+        showToast(`Blocked: this ${config.label} is referenced in ${TABLES.find(t => t.key === rule.child).label} (ON DELETE RESTRICT).`, "danger");
+        return;
+      }
+    }
+    setDb(prev => {
+      let next = { ...prev, [activeTable]: prev[activeTable].filter(r => r[config.pk] !== row[config.pk]) };
+      rules.forEach(rule => {
+        if (rule.mode === "CASCADE") {
+          next[rule.child] = next[rule.child].filter(r => r[rule.fk] !== row[config.pk]);
+        } else if (rule.mode === "SET NULL") {
+          next[rule.child] = next[rule.child].map(r => r[rule.fk] === row[config.pk] ? { ...r, [rule.fk]: null } : r);
+        }
+      });
+      // Mirror the real AFTER DELETE trigger on OrderItem — recalc the affected order
+      if (activeTable === "orderItems") next = recalcOrderTotal(next, row.OrderID);
+      return next;
+    });
+    showToast(`${config.label} deleted${rules.some(r => r.mode !== "RESTRICT") ? " (related records updated)" : ""}.`);
+  };
+
+  return (
+    <div>
+      <PageHeader eyebrow="Full CRUD" title="Admin Panel" sub="Every table, exactly as constrained in MySQL." />
+
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
+        {TABLES.map(t => (
+          <Pill key={t.key} active={activeTable === t.key} onClick={() => { setActiveTable(t.key); setSearch(""); }}>{t.label}</Pill>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 12 }}>
+        <div style={{ position: "relative", flex: 1, maxWidth: 280 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: 10, color: C.inkMuted }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…" style={{ ...inputStyle, paddingLeft: 30 }} />
+        </div>
+        <button onClick={() => setModal({ mode: "add", row: null })} style={primaryBtn}>
+          <Plus size={15} /> Add {config.label}
+        </button>
+      </div>
+
+      <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: C.sand }}>
+              <th style={th}>{config.pk}</th>
+              {config.fields.map(f => <th key={f.key} style={th}>{f.label}</th>)}
+              <th style={{ ...th, width: 90, textAlign: "right" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.length === 0 && (
+              <tr><td colSpan={config.fields.length + 2} style={{ padding: 24, textAlign: "center", color: C.inkMuted }}>No records found.</td></tr>
+            )}
+            {filteredRows.map(row => (
+              <tr key={row[config.pk]} style={{ borderTop: `1px solid ${C.line}` }}>
+                <td style={{ ...td, fontFamily: FONT_MONO, color: C.inkMuted }}>{row[config.pk]}</td>
+                {config.fields.map(f => (
+                  <td key={f.key} style={td}>
+                    {f.type === "fk" ? refLabel(f, row[f.key]) :
+                     f.type === "number" ? (typeof row[f.key] === "number" ? row[f.key].toLocaleString() : row[f.key]) :
+                     (row[f.key] ?? "—")}
+                  </td>
+                ))}
+                <td style={{ ...td, textAlign: "right" }}>
+                  <IconBtn icon={Pencil} onClick={() => setModal({ mode: "edit", row })} />
+                  <IconBtn icon={Trash2} danger onClick={() => handleDelete(row)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {modal && (
+        <RecordModal
+          config={config}
+          db={db}
+          initial={modal.row}
+          onClose={() => setModal(null)}
+          onSave={handleSave}
+        />
+      )}
+    </div>
+  );
+}
+
+function RecordModal({ config, db, initial, onClose, onSave }) {
+  const [form, setForm] = useState(() => {
+    const base = {};
+    config.fields.forEach(f => { base[f.key] = initial ? initial[f.key] ?? "" : ""; });
+    return base;
+  });
+
+  const update = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const cleaned = {};
+    config.fields.forEach(f => {
+      let v = form[f.key];
+      if (f.type === "number") v = v === "" ? 0 : Number(v);
+      if (f.type === "fk") v = v === "" ? null : Number(v);
+      cleaned[f.key] = v;
+    });
+    onSave(cleaned);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(43,27,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={onClose}>
+      <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} style={{ background: C.white, borderRadius: 14, padding: 24, width: 380, maxHeight: "85vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 17, fontWeight: 700 }}>{initial ? "Edit" : "Add"} {config.label}</div>
+          <button type="button" onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer" }}><X size={18} /></button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {config.fields.map(f => (
+            <div key={f.key}>
+              <label style={{ fontSize: 11.5, fontWeight: 600, color: C.inkMuted, display: "block", marginBottom: 4 }}>
+                {f.label} {f.readOnly && "(auto-calculated)"}
+              </label>
+              {f.type === "fk" ? (
+                <select value={form[f.key]} onChange={e => update(f.key, e.target.value)} style={inputStyle} required={!f.nullable}>
+                  <option value="">{f.nullable ? "— none —" : "Select…"}</option>
+                  {db[f.ref].map(r => {
+                    const refConfig = TABLES.find(t => t.key === f.ref);
+                    return <option key={r[refConfig.pk]} value={r[refConfig.pk]}>{r[f.refLabel]}</option>;
+                  })}
+                </select>
+              ) : f.type === "datetime" ? (
+                <input type="datetime-local" value={form[f.key]} onChange={e => update(f.key, e.target.value)} style={inputStyle} required />
+              ) : (
+                <input
+                  type={f.type === "number" ? "number" : "text"}
+                  step={f.type === "number" ? "0.01" : undefined}
+                  value={form[f.key]}
+                  disabled={f.readOnly}
+                  onChange={e => update(f.key, e.target.value)}
+                  style={{ ...inputStyle, ...(f.readOnly ? { background: C.sand, color: C.inkMuted } : {}) }}
+                  required={!f.readOnly}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+          <button type="button" onClick={onClose} style={{ ...secondaryBtn, flex: 1 }}>Cancel</button>
+          <button type="submit" style={{ ...primaryBtn, flex: 1, justifyContent: "center" }}><Check size={15} /> Save</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ============================================================
+   SHARED UI PRIMITIVES
+   ============================================================ */
+const inputStyle = {
+  width: "100%", padding: "8px 10px", borderRadius: 7, border: `1px solid ${C.line}`,
+  fontFamily: FONT_BODY, fontSize: 13, background: C.white, color: C.ink,
+};
+const primaryBtn = {
+  display: "flex", alignItems: "center", gap: 6, background: C.terracotta, color: C.white,
+  border: "none", borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+};
+const secondaryBtn = {
+  background: C.sand, color: C.ink, border: "none", borderRadius: 8, padding: "9px 14px",
+  fontSize: 13, fontWeight: 600, cursor: "pointer",
+};
+const th = { textAlign: "left", padding: "10px 14px", fontSize: 11, fontWeight: 700, color: C.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 };
+const td = { padding: "10px 14px", color: C.ink };
+
+function PageHeader({ eyebrow, title, sub }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: C.terracotta, textTransform: "uppercase", marginBottom: 4 }}>{eyebrow}</div>
+      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 28, fontWeight: 700, color: C.coffee }}>{title}</div>
+      <div style={{ fontSize: 13.5, color: C.inkMuted, marginTop: 3 }}>{sub}</div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, tone, small }) {
+  return (
+    <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 12, padding: "16px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontSize: 11, color: C.inkMuted, fontWeight: 600, marginBottom: 6 }}>{label}</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: small ? 19 : 26, fontWeight: 700, color: tone === "danger" ? C.danger : C.coffee }}>{value}</div>
+        </div>
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: tone === "danger" ? "#FBEAE6" : C.sand, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon size={15} color={tone === "danger" ? C.danger : C.terracotta} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, icon: Icon, children }) {
+  return (
+    <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 12, padding: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <Icon size={15} color={C.terracotta} />
+        <div style={{ fontWeight: 700, fontSize: 14 }}>{title}</div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Pill({ active, onClick, children }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "7px 14px", borderRadius: 20, border: `1px solid ${active ? C.terracotta : C.line}`,
+      background: active ? C.terracotta : C.white, color: active ? C.white : C.ink,
+      fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: FONT_BODY,
+    }}>{children}</button>
+  );
+}
+
+function IconBtn({ icon: Icon, onClick, danger }) {
+  return (
+    <button onClick={onClick} style={{
+      border: "none", background: "none", cursor: "pointer", padding: 5, borderRadius: 6,
+      color: danger ? C.danger : C.inkMuted, display: "inline-flex",
+    }}>
+      <Icon size={14} />
+    </button>
+  );
+}
+
+function EmptyNote({ text }) {
+  return <div style={{ fontSize: 12.5, color: C.inkMuted, textAlign: "center", padding: "20px 0" }}>{text}</div>;
+}
+
+function Toast({ msg, tone }) {
+  return (
+    <div style={{
+      position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)",
+      background: tone === "danger" ? C.danger : C.coffee, color: C.white,
+      padding: "11px 18px", borderRadius: 10, fontSize: 13, fontWeight: 500,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.2)", zIndex: 100, maxWidth: 420, textAlign: "center",
+    }}>
+      {msg}
+    </div>
+  );
+}
