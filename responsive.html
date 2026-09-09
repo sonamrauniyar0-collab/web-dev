@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Responsive Grid</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            background-color: lightgray;
+            color: black;
+        }
+
+        .wrapper {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+        }
+
+
+        .image-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .image-container img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 5px;
+            display: block;
+        }
+
+
+
+        @media (max-width: 767px) {
+
+            body {
+                font-size: 16px;
+                background-color: lightblue;
+                color: blueviolet;
+            }
+
+            .wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .image-container {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .image-container img {
+                aspect-ratio: 1 / 1;
+            }
+        }
+
+
+
+        @media (min-width: 768px) and (max-width: 1199px) {
+
+            body {
+                font-size: 16px;
+                background-color: rosybrown;
+                color: darkblue;
+            }
+
+            .wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .image-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+
+            .image-container img {
+                aspect-ratio: 1 / 1;
+            }
+        }
+
+
+
+        @media (min-width: 1200px) {
+
+            body {
+                font-size: 18px;
+                background-color: lightslategrey;
+                color: brown;
+            }
+
+            .wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .image-container {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 24px;
+            }
+
+            .image-container img {
+                aspect-ratio: 1 / 1;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+    <div class="wrapper">
+
+        <div>
+            <h1>I am from Nepal</h1>
+
+            <p>
+                This is Sonam.
+            </p>
+        </div>
+
+
+        <div class="image-container">
+
+            <img src="im/cat.jpg" alt="Cat">
+
+            <img src="im/images.jpg" alt="Images">
+
+            <img src="im/meow.jpg" alt="Meow">
+
+            <img src="im/trek.jpg" alt="Trek">
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
