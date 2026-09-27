@@ -99,13 +99,13 @@
 //     console.log(`2 × ${i} = ${2 * i}`);
 //     i++;
 // }
-let num = Number(prompt("Enter a number:"));
-let i = 1;
+// let num = Number(prompt("Enter a number:"));
+// let i = 1;
 
-while (i <= 10) {
-    console.log(`${num} × ${i} = ${num * i}`);
-    i++;
-}
+// while (i <= 10) {
+//     console.log(`${num} × ${i} = ${num * i}`);
+//     i++;
+// }
 // let fruits = ["Apple", "Mango", "Banana"];
 
 // console.log(fruits[0]);
@@ -124,3 +124,24 @@ while (i <= 10) {
 //     console.log(fruits[i]);
 //     console.log(fruits.length);
 // }
+// let fruits = ["Apple", "Mango", "Banana", "Orange"];
+// fruits.shift();
+// fruits.unshift ("litchi");
+// for (let i = 0; i < fruits.length; i++) {
+//     console.log(fruits[i]);
+//     console.log(fruits.length);
+// }
+// const myGirls = ["Ceciles", "Lone"];
+
+// const myBoy = ["Emil", "Tobase"];
+
+// const myChildren = myGirls.concat(myBoy);
+
+// console.log(myChildren);
+// const myGirls = ["Ceciles", "Lone"];
+// const myBoy = ["Emil", "Tobase", "sonam"];
+// const myChildren = [...myGirls, ...myBoy];
+// console.log(myChildren);
+const fruits = ["Apple", "Banana", "Mango", "Orange", "Grapes"];
+const myFruits = fruits.slice(1, 4);
+console.log(myFruits);
